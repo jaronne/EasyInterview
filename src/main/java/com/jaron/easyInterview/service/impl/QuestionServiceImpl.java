@@ -1,18 +1,26 @@
 package com.jaron.easyInterview.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jaron.easyInterview.annotation.AuthCheck;
+import com.jaron.easyInterview.common.BaseResponse;
 import com.jaron.easyInterview.common.ErrorCode;
+import com.jaron.easyInterview.common.ResultUtils;
 import com.jaron.easyInterview.constant.CommonConstant;
+import com.jaron.easyInterview.constant.UserConstant;
 import com.jaron.easyInterview.exception.ThrowUtils;
 import com.jaron.easyInterview.mapper.QuestionMapper;
 import com.jaron.easyInterview.model.dto.question.QuestionQueryRequest;
 import com.jaron.easyInterview.model.entity.Question;
+import com.jaron.easyInterview.model.entity.QuestionBankQuestion;
 import com.jaron.easyInterview.model.entity.User;
 import com.jaron.easyInterview.model.vo.QuestionVO;
 import com.jaron.easyInterview.model.vo.UserVO;
+import com.jaron.easyInterview.service.QuestionBankQuestionService;
 import com.jaron.easyInterview.service.QuestionService;
 import com.jaron.easyInterview.service.UserService;
 import com.jaron.easyInterview.utils.SqlUtils;
@@ -20,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +51,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private QuestionBankQuestionService questionBankQuestionService;
 
     /**
      * 校验数据
@@ -183,4 +196,31 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         return questionVOPage;
     }
 
+    /**
+     * 分页获取题目列表（仅管理员可用）
+     *
+     * @param questionQueryRequest
+     * @return
+     */
+    public Page<Question> listQuestionByPage(QuestionQueryRequest questionQueryRequest) {
+        long current = questionQueryRequest.getCurrent();
+        long size = questionQueryRequest.getPageSize();
+        Long questionBankId = questionQueryRequest.getQuestionBankId();
+        QueryWrapper<Question> queryWrapper = this.getQueryWrapper(questionQueryRequest);
+        // 通过题库关联查询题目
+        if (questionBankId != null) {
+            LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class)
+                    // 只需要 QuestionId
+                    .select(QuestionBankQuestion::getQuestionId)
+                    .eq(QuestionBankQuestion::getQuestionBankId, questionBankId);
+            List<QuestionBankQuestion> questionlist = questionBankQuestionService.list(lambdaQueryWrapper);
+            if (CollUtil.isNotEmpty(questionlist)) {
+                Set<Long> questionIdSet = questionlist.stream().map(QuestionBankQuestion::getQuestionId).collect(Collectors.toSet());
+                queryWrapper.in("id", questionIdSet);
+            }
+        }
+        // 查询数据库
+        Page<Question> questionPage = this.page(new Page<>(current, size), queryWrapper);
+        return questionPage;
+    }
 }
