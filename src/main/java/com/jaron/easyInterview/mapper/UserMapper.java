@@ -1,14 +1,14 @@
 package com.jaron.easyInterview.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jaron.easyInterview.model.entity.User;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
- * 用户数据库操作
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
- */
+* @author jaron
+* @description 针对表【user(用户)】的数据库操作Mapper
+* @createDate 2024-10-09 20:35:22
+* @Entity generator.domain.User
+*/
 public interface UserMapper extends BaseMapper<User> {
 
 }
