@@ -21,7 +21,9 @@ import com.jaron.easyInterview.model.vo.LoginUserVO;
 import com.jaron.easyInterview.model.vo.UserVO;
 import com.jaron.easyInterview.service.UserService;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -316,5 +318,32 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 添加用户签到记录
+     *
+     * @return 是否签到成功
+     */
+    @PostMapping("/add/sign_in")
+    public BaseResponse<Boolean> addUserSignIn(HttpServletRequest request) {
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        boolean result = userService.addUserSignIn(loginUser.getId());
+        return ResultUtils.success(result);
+    }
+
+    /**
+     * 获取用户签到记录
+     *
+     * @return 是否签到成功
+     */
+    // todo jmeter 压测
+    @PostMapping("/get/sign_in")
+    public BaseResponse<List<Integer>> getUserSignIn(Integer year, HttpServletRequest request) {
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        List<Integer> userSignInRecord = userService.getUserSignInRecord(loginUser.getId(), year);
+        return ResultUtils.success(userSignInRecord);
     }
 }
