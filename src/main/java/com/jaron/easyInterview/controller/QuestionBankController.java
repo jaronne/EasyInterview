@@ -6,6 +6,7 @@ import com.jaron.easyInterview.common.BaseResponse;
 import com.jaron.easyInterview.common.DeleteRequest;
 import com.jaron.easyInterview.common.ErrorCode;
 import com.jaron.easyInterview.common.ResultUtils;
+import com.jaron.easyInterview.constant.HotKeyConstant;
 import com.jaron.easyInterview.constant.UserConstant;
 import com.jaron.easyInterview.exception.BusinessException;
 import com.jaron.easyInterview.exception.ThrowUtils;
@@ -21,6 +22,7 @@ import com.jaron.easyInterview.model.vo.QuestionBankVO;
 import com.jaron.easyInterview.service.QuestionBankService;
 import com.jaron.easyInterview.service.QuestionService;
 import com.jaron.easyInterview.service.UserService;
+import com.jd.platform.hotkey.client.callback.JdHotKeyStore;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.weaver.patterns.TypePatternQuestions;
 import org.springframework.beans.BeanUtils;
@@ -31,7 +33,6 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * 题库接口
- *
  */
 @RestController
 @RequestMapping("/questionBank")
@@ -142,6 +143,17 @@ public class QuestionBankController {
         ThrowUtils.throwIf(questionBankQueryRequest == null, ErrorCode.PARAMS_ERROR);
         Long id = questionBankQueryRequest.getId();
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+        // 生成 key
+        String key = HotKeyConstant.getHotKey(id);
+        // 如果是 hotkey
+        if (JdHotKeyStore.isHotKey(key)) {
+            // 从本地缓存中读取值
+            Object cachedQuestionBankVo = JdHotKeyStore.get(key);
+            if (cachedQuestionBankVo != null) {
+                // 有缓存，直接返回
+                return ResultUtils.success((QuestionBankVO) cachedQuestionBankVo);
+            }
+        }
         // 查询数据库
         QuestionBank questionBank = questionBankService.getById(id);
         ThrowUtils.throwIf(questionBank == null, ErrorCode.NOT_FOUND_ERROR);
@@ -154,6 +166,7 @@ public class QuestionBankController {
             Page<Question> questionPage = questionService.listQuestionByPage(questionQueryRequest);
             questionBankVO.setQuestionPage(questionPage);
         }
+        JdHotKeyStore.smartSet(key, questionBankVO);
         // 获取封装类
         return ResultUtils.success(questionBankVO);
     }

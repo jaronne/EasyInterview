@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * 题目视图
- *
  */
 @Data
 public class QuestionVO implements Serializable {
@@ -90,7 +89,7 @@ public class QuestionVO implements Serializable {
         }
         QuestionVO questionVO = new QuestionVO();
         BeanUtils.copyProperties(question, questionVO);
-        questionVO.setTagList(JSONUtil.toList(question.getTags(), String.class));
+        questionVO.setTagList(JSONUtil.toList(JSONUtil.parseArray(question.getTags()), String.class));
         return questionVO;
     }
 }
