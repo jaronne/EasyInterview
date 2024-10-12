@@ -7,10 +7,9 @@ import java.util.List;
 
 /**
  * 创建题库题目关联表请求
- *
  */
 @Data
-public class QuestionBankQuestionAddRequest implements Serializable {
+public class QuestionBankQuestionBatchRemoveRequest implements Serializable {
 
     /**
      * 题库 id
@@ -18,9 +17,9 @@ public class QuestionBankQuestionAddRequest implements Serializable {
     private Long questionBankId;
 
     /**
-     * 题目 id
+     * 题目 id 列表
      */
-    private Long questionId;
+    private List<Long> questionId;
 
     private static final long serialVersionUID = 1L;
 }
